@@ -81,3 +81,20 @@ def test_mom_calibration():
     scale = mean * (1 + ratio) / 2
     expected = initial + scale / shape * ((101 * 0.001 / len(peaks)) ** (-shape) - 1)
     assert model.threshold_ == pytest.approx(expected)
+
+
+def test_smaller_risk_raises_the_threshold():
+    """Equation (11) gives a higher threshold for a smaller tail probability q."""
+    from pysad.models import FluxEV
+
+    rng = np.random.default_rng(1)
+    X = (np.sin(np.arange(3000) / 20) + rng.normal(0, 0.1, 3000))[:, None]
+
+    thresholds = []
+    for risk in [1e-2, 1e-3, 1e-5]:
+        model = FluxEV(risk=risk)
+        model.fit(X)
+        thresholds.append(model.threshold_)
+
+    assert np.isfinite(thresholds).all()
+    assert thresholds[0] < thresholds[1] < thresholds[2]

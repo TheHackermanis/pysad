@@ -71,3 +71,16 @@ def test_graph_grows_within_capacity_and_follows_drift():
     assert model.score_partial(np.array([30.0, 30.0])) < before / 10
     assert model.score_partial(np.zeros(2)) > 20.0
     assert np.all(model.neurons_ > 20.0)
+
+
+def test_max_age_changes_the_scores():
+    """Edges older than max_age are dropped, which changes the graph and the anomaly margin."""
+    from pysad.models import GNGA
+
+    X = np.random.default_rng(0).random((1000, 2))
+
+    scores = GNGA(max_age=1, random_state=0).fit_score(X)
+    other = GNGA(max_age=100, random_state=0).fit_score(X)
+
+    assert np.isfinite(scores).all()
+    assert not np.array_equal(scores, other)
